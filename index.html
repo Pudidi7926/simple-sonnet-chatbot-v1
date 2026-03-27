@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sonnet 3.5 Chat</title>
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Raleway', sans-serif;
+            background-color: #0f172a;
+        }
+
+        /* Kecilin spasi paragraf di dalam bubble */
+        .prose p {
+            margin: 0 0 0.5rem 0 !important;
+            line-height: 1.5;
+        }
+
+        .prose p:last-child {
+            margin-bottom: 0 !important;
+        }
+
+        /* Styling kotak kode */
+        .prose pre {
+            background: #1e293b;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            margin: 0.5rem 0;
+            overflow-x: auto;
+            border: 1px solid #334155;
+        }
+
+        .prose code {
+            color: #818cf8;
+            font-size: 0.85rem;
+        }
+
+        .typing-dot {
+            animation: blink 1.4s infinite;
+            opacity: 0.3;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 0.3;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body class="text-slate-200 h-screen flex flex-col">
+
+    <header class="p-4 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0">
+        <h1 class="text-center font-bold text-indigo-400 tracking-widest">SONNET AI</h1>
+    </header>
+
+    <main id="chat-box" class="flex-1 overflow-y-auto p-4 space-y-4 md:px-[20%]">
+        <div class="flex justify-start">
+            <div class="bg-slate-800 p-3 rounded-2xl rounded-tl-none max-w-[85%] border border-slate-700 shadow-sm">
+                Yo! Ada yang bisa dibantu, niggers?
+            </div>
+        </div>
+    </main>
+
+    <footer class="p-4 md:px-[20%] bg-slate-900/50 border-t border-slate-800">
+        <div class="flex gap-2">
+            <input type="text" id="user-input" placeholder="Tulis pesan..."
+                class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <button onclick="send()"
+                class="bg-indigo-600 px-5 py-2 rounded-xl hover:bg-indigo-500 transition">Kirim</button>
+        </div>
+    </footer>
+
+    <script>
+        const chatBox = document.getElementById('chat-box');
+        const input = document.getElementById('user-input');
+
+        async function send() {
+            const msg = input.value.trim();
+            if (!msg) return;
+
+            // 1. Tampilkan Chat User (Kanan)
+            chatBox.innerHTML += `
+                <div class="flex justify-end">
+                    <div class="bg-indigo-600 p-3 rounded-2xl rounded-tr-none max-w-[80%] shadow-md text-sm">
+                        ${msg}
+                    </div>
+                </div>`;
+            input.value = '';
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // 2. Tampilkan Loading
+            const tid = 't-' + Date.now();
+            chatBox.innerHTML += `
+                <div id="${tid}" class="flex justify-start">
+                    <div class="bg-slate-800 p-3 rounded-2xl rounded-tl-none border border-slate-700 text-slate-400 text-sm">
+                        Mikir... <span class="typing-dot">.</span><span class="typing-dot" style="animation-delay:0.2s">.</span><span class="typing-dot" style="animation-delay:0.4s">.</span>
+                    </div>
+                </div>`;
+
+            try {
+                // 3. Tembak ke Server.js
+                const res = await fetch('http://localhost:3000/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: msg })
+                });
+                const data = await res.json();
+
+                // 4. Update dengan jawaban asli (Markdown support)
+                document.getElementById(tid).innerHTML = `
+                    <div class="bg-slate-800 p-3 rounded-2xl rounded-tl-none border border-slate-700 max-w-[85%] shadow-sm prose prose-invert prose-sm">
+                        ${data.reply}
+                    </div>`;
+            } catch (e) {
+                document.getElementById(tid).innerHTML = `<div class="text-red-400 text-xs">Error: Koneksi ke server putus!</div>`;
+            }
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        input.addEventListener('keypress', (e) => { if (e.key === 'Enter') send() });
+    </script>
+</body>
+
+</html>
